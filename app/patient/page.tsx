@@ -6,17 +6,31 @@ import Link from 'next/link';
 
 const PharmacyMap = dynamic(() => import('../../components/PharmacyMap'), { ssr: false });
 
-export default function Home() {
+export default function PatientPage() {
+  const [medicines, setMedicines] = useState<any[]>([]);
+  const [selectedMedicineId, setSelectedMedicineId] = useState<number>(1);
   const [pharmacies, setPharmacies] = useState([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
 
-  // Modular fetcher function
-  const fetchPharmacies = useCallback(async (lat: number, lng: number) => {
+  // Fetch list of medicines for the dropdown search
+  useEffect(() => {
+    fetch('/api/medicines')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setMedicines(data);
+          setSelectedMedicineId(data[0].id);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch medicines", err));
+  }, []);
+
+  const fetchPharmacies = useCallback(async (lat: number, lng: number, medId: number) => {
     try {
-      const response = await fetch(`/api/pharmacies?lat=${lat}&lng=${lng}&medicineId=1`);
+      const response = await fetch(`/api/pharmacies?lat=${lat}&lng=${lng}&medicineId=${medId}`);
       const data = await response.json();
       setPharmacies(data);
     } catch (error) {
@@ -26,7 +40,7 @@ export default function Home() {
     }
   }, []);
 
-  // 1. Get location on mount
+  // 1. Get user location on mount
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -34,7 +48,6 @@ export default function Home() {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
           setUserLocation({ lat, lng });
-          fetchPharmacies(lat, lng);
         },
         (error) => {
           console.error("Location error:", error);
@@ -46,33 +59,43 @@ export default function Home() {
       setErrorMsg("Geolocation is not supported by your browser.");
       setLoading(false);
     }
-  }, [fetchPharmacies]);
+  }, []);
 
-  // 2. Poll every 3 seconds so status changes reflect immediately
+  // 2. Fetch pharmacies whenever user location or selected medicine changes
   useEffect(() => {
-    if (!userLocation) return;
+    if (userLocation && selectedMedicineId) {
+      setLoading(true);
+      fetchPharmacies(userLocation.lat, userLocation.lng, selectedMedicineId);
+    }
+  }, [userLocation, selectedMedicineId, fetchPharmacies]);
+
+  // 3. Real-time polling every 3 seconds
+  useEffect(() => {
+    if (!userLocation || !selectedMedicineId) return;
     const interval = setInterval(() => {
-      fetchPharmacies(userLocation.lat, userLocation.lng);
+      fetchPharmacies(userLocation.lat, userLocation.lng, selectedMedicineId);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [userLocation, fetchPharmacies]);
+  }, [userLocation, selectedMedicineId, fetchPharmacies]);
 
   return (
     <main className="min-h-screen p-8 bg-slate-50 font-sans">
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
+            <Link href="/" className="text-xs text-indigo-600 font-bold hover:underline mb-2 inline-block">
+              ← Back to Portal Selection
+            </Link>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
-              Cura Patient Finder
+              Patient Medicine Finder
             </h1>
             <p className="text-slate-500 text-sm mt-1 tracking-wide font-medium">
-              Real-time inventory mapping powered by live location.
+              Search real-time inventory powered by live location.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            
             <div className="inline-flex rounded-lg bg-slate-200/80 p-1">
               <button
                 onClick={() => setActiveTab('list')}
@@ -98,7 +121,25 @@ export default function Home() {
           </div>
         </div>
 
-        {loading && <p className="text-slate-600 font-medium">Finding your exact location...</p>}
+        {/* Medicine Search Bar / Dropdown */}
+        <div className="mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-4">
+          <label className="text-sm font-bold text-slate-700 w-full sm:w-auto">
+            Select Medicine:
+          </label>
+          <select
+            value={selectedMedicineId}
+            onChange={(e) => setSelectedMedicineId(Number(e.target.value))}
+            className="w-full sm:flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {medicines.map((med) => (
+              <option key={med.id} value={med.id}>
+                {med.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {loading && <p className="text-slate-600 font-medium">Finding available pharmacies near you...</p>}
         {errorMsg && <p className="text-red-500 font-semibold">{errorMsg}</p>}
 
         {!loading && !errorMsg && (
@@ -133,7 +174,7 @@ export default function Home() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500">No pharmacies found near your current location.</p>
+                  <p className="text-slate-500">No pharmacies found with this medicine in stock near you.</p>
                 )}
               </div>
             )}
