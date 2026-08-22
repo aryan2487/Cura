@@ -3,18 +3,16 @@
 import { useState } from "react";
 import { MOCK_PHARMACIES, Pharmacy } from "./data/mockPharmacies";
 import dynamic from "next/dynamic";
-import { Search, MapPin, Navigation, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, MapPin, Navigation, Clock, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 
-// Dynamically load the map to prevent SSR window errors
 const PharmacyMap = dynamic(() => import("@/components/PharmacyMap"), { ssr: false });
 
 export default function PatientApp() {
   const [searchTerm, setSearchTerm] = useState("Insulin");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [pharmacies, setPharmacies] = useState<Pharmacy[]>(MOCK_PHARMACIES);
+  const [pharmacies] = useState<Pharmacy[]>(MOCK_PHARMACIES);
   const [reservation, setReservation] = useState<{ pharmacyName: string; medicine: string } | null>(null);
 
-  // Handle 60-minute hold reservation logic
   const handleReserve = (pharmacyId: string, medicineName: string) => {
     const targetPharmacy = pharmacies.find((p) => p.id === pharmacyId);
     if (targetPharmacy) {
@@ -22,113 +20,125 @@ export default function PatientApp() {
         pharmacyName: targetPharmacy.name,
         medicine: medicineName,
       });
-      // Optional: Trigger a state change to decrement stock locally for demo impact
     }
   };
 
-  // Filter pharmacies that carry the searched medicine
   const filteredPharmacies = pharmacies.filter((p) =>
     p.medicines.some((m) => m.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center pb-12">
-      {/* Mobile Frame Container */}
-      <div className="w-full max-w-md bg-white min-h-screen shadow-xl flex flex-col relative">
+    <main className="min-h-screen bg-slate-100 flex flex-col items-center py-0 sm:py-6">
+      {/* Mobile App Container Frame */}
+      <div className="w-full max-w-md bg-white min-h-screen sm:min-h-[850px] sm:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden border border-slate-200">
         
         {/* Header */}
-        <header className="bg-blue-600 text-white p-4 sticky top-0 z-20 shadow-md">
-          <div className="flex justify-between items-center mb-3">
-            <h1 className="text-xl font-bold tracking-tight">MedSpot 🩺</h1>
-            <span className="text-xs bg-blue-500 px-2 py-1 rounded-full font-medium">Last-Mile Access</span>
+        <header className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-5 sticky top-0 z-20 shadow-lg">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md">
+                <ShieldCheck className="w-6 h-6 text-emerald-300" />
+              </div>
+              <div>
+                <h1 className="text-xl font-black tracking-tight">Cura <span className="text-emerald-300">MedSpot</span></h1>
+                <p className="text-[11px] text-indigo-100 font-medium">Real-time emergency access</p>
+              </div>
+            </div>
+            <span className="text-[10px] bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+              Live Sync
+            </span>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3.5 top-3.5 text-slate-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search medicine (e.g., Insulin, Inhaler)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm shadow-inner"
+              className="w-full pl-10 pr-4 py-3 rounded-xl text-slate-900 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm font-medium shadow-inner transition"
             />
           </div>
         </header>
 
-        {/* Active Reservation Banner Alert */}
+        {/* Active Reservation Banner */}
         {reservation && (
-          <div className="bg-emerald-50 border-b border-emerald-200 p-3 px-4 flex items-center justify-between text-emerald-800 animate-pulse">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <div className="bg-emerald-50 border-b border-emerald-200 p-3.5 px-5 flex items-center justify-between text-emerald-900 animate-fadeIn">
+            <div className="flex items-center space-x-3">
+              <div className="bg-emerald-500 text-white p-1.5 rounded-lg shadow-sm">
+                <Clock className="w-4 h-4 animate-pulse" />
+              </div>
               <div className="text-xs">
                 <p className="font-bold">Reserved: {reservation.medicine}</p>
-                <p className="text-emerald-700">Held at {reservation.pharmacyName} for 60 mins.</p>
+                <p className="text-emerald-700 text-[11px]">Held for 60 mins at {reservation.pharmacyName}</p>
               </div>
             </div>
-            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
           </div>
         )}
 
-        {/* View Switcher Tabs (List vs Map) */}
-        <div className="flex border-b border-gray-200 bg-white sticky top-[116px] z-10">
+        {/* View Tabs */}
+        <div className="flex border-b border-slate-100 bg-white sticky top-[132px] z-10 px-4 pt-2">
           <button
             onClick={() => setViewMode("list")}
-            className={`flex-1 py-3 text-sm font-semibold text-center border-b-2 transition-colors ${
-              viewMode === "list" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500"
+            className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-all ${
+              viewMode === "list" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-400 hover:text-slate-600"
             }`}
           >
             List View ({filteredPharmacies.length})
           </button>
           <button
             onClick={() => setViewMode("map")}
-            className={`flex-1 py-3 text-sm font-semibold text-center border-b-2 transition-colors ${
-              viewMode === "map" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500"
+            className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-all ${
+              viewMode === "map" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-400 hover:text-slate-600"
             }`}
           >
-            Map View
+            Interactive Map
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-4 flex-1 flex flex-col space-y-4">
+        {/* Main Body */}
+        <div className="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto bg-slate-50/50">
           {filteredPharmacies.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 flex flex-col items-center">
-              <AlertCircle className="w-10 h-10 text-gray-300 mb-2" />
-              <p className="font-medium">No nearby pharmacies have this medicine right now.</p>
-              <p className="text-xs text-gray-400 mt-1">Try searching for "Insulin" or "Inhaler"</p>
+            <div className="text-center py-16 text-slate-400 flex flex-col items-center justify-center">
+              <div className="bg-slate-100 p-4 rounded-full mb-3">
+                <AlertCircle className="w-8 h-8 text-slate-300" />
+              </div>
+              <p className="font-semibold text-slate-700">No pharmacies found nearby.</p>
+              <p className="text-xs text-slate-400 mt-1">Try searching for "Insulin" or "Paracetamol"</p>
             </div>
           ) : viewMode === "map" ? (
             <PharmacyMap pharmacies={filteredPharmacies} onReserve={handleReserve} selectedMedicine={searchTerm} />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 pb-6">
               {filteredPharmacies.map((pharmacy) => {
                 const med = pharmacy.medicines.find((m) => m.name.toLowerCase().includes(searchTerm.toLowerCase()));
                 const status = med ? med.status : "Out of Stock";
                 const price = med ? med.price : 0;
 
                 return (
-                  <div key={pharmacy.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow transition">
+                  <div key={pharmacy.id} className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-bold text-gray-800 text-base">{pharmacy.name}</h3>
-                        <p className="text-xs text-gray-500 flex items-center mt-0.5">
-                          <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                          {pharmacy.address} • <span className="font-semibold text-gray-700 ml-1">{pharmacy.distanceKm} km away</span>
+                        <h3 className="font-bold text-slate-900 text-sm tracking-tight">{pharmacy.name}</h3>
+                        <p className="text-xs text-slate-500 flex items-center mt-1">
+                          <MapPin className="w-3.5 h-3.5 mr-1 text-slate-400 flex-shrink-0" />
+                          {pharmacy.address} • <span className="font-semibold text-slate-700 ml-1">{pharmacy.distanceKm} km away</span>
                         </p>
                       </div>
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
-                        status === "In Stock" ? "bg-green-100 text-green-700" :
-                        status === "Low" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"
+                      <span className={`text-[10px] px-2.5 py-1 rounded-full font-extrabold uppercase tracking-wider ${
+                        status === "In Stock" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                        status === "Low" ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-rose-50 text-rose-700 border border-rose-200"
                       }`}>
                         {status}
                       </span>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                       <div>
-                        <span className="text-xs text-gray-400 block">Price</span>
-                        <span className="font-bold text-gray-900">₹{price}</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unit Price</span>
+                        <span className="font-black text-slate-900 text-base">₹{price}</span>
                       </div>
 
                       <div className="flex space-x-2">
@@ -136,14 +146,14 @@ export default function PatientApp() {
                           href={`https://www.google.com/maps/search/?api=1&query=${pharmacy.lat},${pharmacy.lng}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg text-xs font-medium flex items-center"
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold flex items-center transition"
                         >
-                          <Navigation className="w-4 h-4 mr-1 text-blue-600" /> Navigate
+                          <Navigation className="w-3.5 h-3.5 mr-1 text-indigo-600" /> Directions
                         </a>
                         {status !== "Out of Stock" && (
                           <button
                             onClick={() => handleReserve(pharmacy.id, med?.name || searchTerm)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-semibold shadow"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm shadow-indigo-200 transition"
                           >
                             Reserve 60m
                           </button>
