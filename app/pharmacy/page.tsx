@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-const PharmacyMap = dynamic(() => import('../components/PharmacyMap'), { 
+const PharmacyMap = dynamic(() => import('../../components/PharmacyMap'), { 
   ssr: false 
 });
 
