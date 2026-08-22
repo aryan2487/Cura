@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import PharmacyMap from '@/components/PharmacyMap';
+import dynamic from 'next/dynamic';
+
+const PharmacyMap = dynamic(() => import('../components/PharmacyMap'), { 
+  ssr: false 
+});
 
 export interface Pharmacy {
   id: string;
