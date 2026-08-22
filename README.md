@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💊 MedSpot — Real-Time Local Pharmacy & Medicine Availability Finder
 
-## Getting Started
+MedSpot is a full-stack web application designed to eliminate the frustration of running from store to store during medical emergencies. It connects patients searching for specific medicines directly with local pharmacies in real time, displaying exact distances using geolocation and allowing store owners to manage live inventory on the fly.
 
-First, run the development server:
+---
 
+## 🚀 Key Features
+
+* **Real-Time Stock & Distance Calculation:** Patients can select any medicine and instantly see nearby local pharmacies sorted by distance, calculated dynamically via browser geolocation and MySQL spatial functions.
+* **Pharmacy Owner Admin Dashboard:** Store owners can log into their portal to instantly toggle medicine inventory status (**In Stock** vs. **Out of Stock**) in real time.
+* **"Others" Custom Medicine Request Workflow:** If a patient needs an unlisted medicine, they can type it manually under the "Others" option. This dispatches a live request to the Testing pharmacy.
+* **Live Status Sync:** Pharmacy owners can review incoming custom requests and click **Confirm** or **Deny**. The patient dashboard updates instantly to reflect the pharmacy's response.
+* **Automatic Clean Slate:** Custom request lists automatically truncate and clear themselves out whenever the development server restarts, ensuring a pristine demo environment for presentations.
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend & Backend:** Next.js (App Router)
+* **Styling:** Tailwind CSS
+* **Database:** MySQL (`mysql2` promise pool)
+* **APIs & Geolocation:** Native browser Geolocation API & MySQL Spatial `ST_Distance_Sphere`
+
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Clone the Repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+git clone [https://github.com/your-username/medspot.git](https://github.com/your-username/medspot.git)
+cd medspot
