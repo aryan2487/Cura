@@ -1,73 +1,64 @@
-'use client';
+"use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-export interface Pharmacy {
-  id: string | number;
-  name: string;
-  phone?: string;
-  lat?: number;
-  lng?: number;
-  latitude?: number;
-  longitude?: number;
-  distance_km?: number;
-}
-
-interface PharmacyMapProps {
-  pharmacies: Pharmacy[];
-  onReserve: (pharmacyId: string | number, medicineName: string) => void;
-  selectedMedicine: string;
-}
-
-const defaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
+// Fix for default Leaflet icons in Next.js (Used for pharmacies - Blue)
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-export default function PharmacyMap({ pharmacies, onReserve, selectedMedicine }: PharmacyMapProps) {
-  const defaultCenter: [number, number] = [22.7196, 75.8577];
+// Custom Red Icon for the User's Location
+const redIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
+// Helper component to smoothly move the map when the center changes
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  map.setView(center, map.getZoom());
+  return null;
+}
+
+export default function PharmacyMap({ pharmacies, center }: { pharmacies: any[], center: [number, number] }) {
   return (
-    <div className="w-full h-[450px] rounded-2xl overflow-hidden shadow-lg border border-slate-200 z-0">
-      <MapContainer center={defaultCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
+    <div style={{ height: '400px', width: '100%' }}>
+      <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <ChangeView center={center} />
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap contributors'
         />
-        {pharmacies && pharmacies.map((pharmacy) => {
-          // Fallback check for different possible database column names
-          const latitude = pharmacy.lat ?? pharmacy.latitude ?? 22.7196;
-          const longitude = pharmacy.lng ?? pharmacy.longitude ?? 75.8577;
+        
+        {/* Render the User's Location Pin (Red) */}
+        <Marker position={center} icon={redIcon}>
+          <Popup>
+            <div className="text-center">
+              <strong>You are here</strong><br />
+              <span className="text-xs text-gray-500">Live GPS Location</span>
+            </div>
+          </Popup>
+        </Marker>
 
-          return (
-            <Marker 
-              key={pharmacy.id} 
-              position={[latitude, longitude]} 
-              icon={defaultIcon}
-            >
-              <Popup>
-                <div className="p-2 font-sans">
-                  <h3 className="font-bold text-slate-900 text-sm">{pharmacy.name}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    📞 {pharmacy.phone || 'N/A'} • <span className="font-semibold text-slate-700">{pharmacy.distance_km ?? '1.2'} km</span>
-                  </p>
-                  <div className="mt-3">
-                    <button
-                      onClick={() => onReserve(pharmacy.id, selectedMedicine)}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2.5 py-1.5 rounded-lg font-medium shadow-sm transition"
-                    >
-                      Reserve 60m
-                    </button>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+        {/* Render pins for each pharmacy (Blue) */}
+        {pharmacies.map((pharmacy) => (
+          <Marker key={pharmacy.id} position={[pharmacy.lat, pharmacy.lng]}>
+            <Popup>
+              <strong>{pharmacy.name}</strong><br />
+              {pharmacy.distance_km} km away<br />
+              {pharmacy.phone}
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
